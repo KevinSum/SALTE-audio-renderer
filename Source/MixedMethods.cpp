@@ -345,14 +345,19 @@ void MixedMethodsComponent::buttonClicked(Button* buttonThatWasClicked)
 			double position = m_player->getPlaybackHeadPosition();
 			
 			m_player->loadSourceToTransport(trial->getMCondition(i)->filepath);
+			sendMsgToLogWindow("Loaded " + trial->getMCondition(i)->filepath + "SOFA");
 			m_player->setPlaybackHeadPosition(position);
 			m_player->setGain(trial->getMCondition(i)->gain);
+			sendMsgToLogWindow("Gain: " + std::to_string(trial->getMCondition(i)->gain));
 
 			// renderer configuration
 			m_renderer->setOrder(trial->getMCondition(i)->renderingOrder);
+			sendMsgToLogWindow("Order: " + std::to_string(trial->getMCondition(i)->renderingOrder));
+
 
 			if (trial->getMCondition(i)->ambixConfig.isNotEmpty())
 				m_renderer->loadAmbixFile(File(trial->getMCondition(i)->ambixConfig));
+				//m_renderer->loadHRIRsFromSofaFile(File(trial->getMCondition(i)->ambixConfig));
 			else
 				m_renderer->loadStandardDefault();
 
@@ -405,6 +410,8 @@ void MixedMethodsComponent::buttonClicked(Button* buttonThatWasClicked)
 			return;
 		
 		sendMsgToLogWindow("Condition name: " + trial->getTCondition(0)->name);
+
+		sendMsgToLogWindow("This One");
 
 		m_player->pause();
 		

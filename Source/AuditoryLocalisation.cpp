@@ -12,6 +12,14 @@ AuditoryLocalisation::AuditoryLocalisation()
 	m_chooseStimuliFolder.addListener(this);
 	addAndMakeVisible(m_chooseStimuliFolder);
 
+	m_personalizedHRTF.setButtonText("Choose Personalized HRTF");
+	m_personalizedHRTF.addListener(this);
+	addAndMakeVisible(m_personalizedHRTF);
+
+	m_genericHRTF.setButtonText("Choose Generic HRTF");
+	m_genericHRTF.addListener(this);
+	addAndMakeVisible(m_genericHRTF);
+
 	m_startTest.setButtonText("Start Test");
 	m_startTest.setToggleState(false, dontSendNotification);
 	m_startTest.addListener(this);
@@ -53,6 +61,7 @@ void AuditoryLocalisation::init(OscTransceiver* oscTxRx, StimulusPlayer* player,
 	m_player = player;
 	m_player->addChangeListener(this);
 	m_oscTxRx = oscTxRx;
+	m_oscTxRx->addListener(this);
 
 	// load settings
 	initSettings();
@@ -72,22 +81,27 @@ void AuditoryLocalisation::paint(Graphics& g)
 
 	g.setColour(Colours::white);
 	g.drawText(audioFilesDir.getFullPathName(), 180, 20, 440, 25, Justification::centredLeft);
-	g.drawText("Number of trials: " + String(audioFilesArray.size()) + ", total length: " + returnHHMMSS(totalTimeOfAudioFiles), 180, 50, 440, 25, Justification::centredLeft);
+	g.drawText(genericHRTF_file.getFileName(), 180, 50, 440, 25, Justification::centredLeft);
+	g.drawText(personalizedHRTF_file.getFileName(), 180, 80, 440, 25, Justification::centredLeft);
+	g.drawText("Number of trials: " + String(audioFilesArray.size()) + ", total length: " + returnHHMMSS(totalTimeOfAudioFiles), 180, 110, 440, 25, Justification::centredLeft);
 	
 	if(audioFilesArray.size() > 0)
-		g.drawText("Current trial: " + String(currentTrialIndex + 1) + " of " + String(audioFilesArray.size()), 180, 80, 440, 25, Justification::centredLeft);
+		g.drawText("Current trial: " + String(currentTrialIndex + 1) + " of " + String(audioFilesArray.size()), 180, 140, 440, 25, Justification::centredLeft);
 }
 
 void AuditoryLocalisation::resized()
 {
 	m_chooseStimuliFolder.setBounds(20, 20, 150, 25);
-	m_startTest.setBounds(20, 50, 150, 25);
+	m_genericHRTF.setBounds(20, 50, 150, 25);
+	m_personalizedHRTF.setBounds(20, 80, 150, 25);
+	m_startTest.setBounds(20, 110, 150, 25);
+	m_saveLogButton.setBounds(20, 140, 150, 25);
+
 	m_prevTrial.setBounds(20, 420, 100, 25);
 	m_nextTrial.setBounds(140, 420, 100, 25);
 	m_confirmPointer.setBounds(320, 320, 150, 25);
 
-	m_saveLogButton.setBounds(20, 110, 150, 25);
-	messageCounter.setBounds(20, 140, 150, 25);
+	messageCounter.setBounds(20, 170, 150, 25);
 }
 
 void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
@@ -116,7 +130,7 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 			m_oscTxRx->addListener(this);
 			activationTime = Time::getMillisecondCounterHiRes();
 
-			loadFile();
+			//loadFile();
 			m_startTest.setToggleState(true, dontSendNotification);
 			m_startTest.setButtonText("Stop Test");
 		}
@@ -151,6 +165,42 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 		{
 			saveLog();
 		}
+	}
+	else if (buttonThatWasClicked == &m_genericHRTF)
+	{
+		// player configuration
+		//m_player->pause();
+		//m_player->loadSourceToTransport("C:\MEng Project\Stimulus_generation\noises1\stim_vis_0_1.wav");
+		//juce::String audioFile = "C:\MEng Project\SALTE\SALTE_DEMO_TEST\AmbisonicScenes\Speech_1_3OA_cm2_256.wav";
+		//m_player->loadSourceToTransport(audioFilesArray[currentTrialIndex].getFullPathName());
+
+		FileChooser fc("Select Ambix Config file to open...",
+			File::getCurrentWorkingDirectory(),
+			"*.config",
+			true);
+
+		if (fc.browseForFileToOpen())
+		{
+			genericHRTF_file = fc.getResult();
+
+			//m_renderer->setOrder(5);
+			//m_renderer->loadAmbixFile(chosenFile);
+		}
+		//m_player->setGain(0);
+		//m_player->play();
+	}
+	else if (buttonThatWasClicked == &m_personalizedHRTF)
+	{
+		FileChooser fc("Select Ambix Config file to open...",
+			File::getCurrentWorkingDirectory(),
+			"*.config",
+			true);
+
+		if (fc.browseForFileToOpen())
+		{
+			personalizedHRTF_file = fc.getResult();
+		}
+
 	}
 
 	repaint();
@@ -201,6 +251,13 @@ void AuditoryLocalisation::processOscMessage(const OSCMessage& message)
 	}
 	
 	oscMessageList.add(messageText);
+
+	if (message.getAddressPattern() == "/nextSample" && message.size() == 1)
+	{
+
+		m_nextTrial.triggerClick();
+		sendMsgToLogWindow("Hi we did it");
+	}
 }
 
 void AuditoryLocalisation::saveLog()
@@ -277,7 +334,7 @@ void AuditoryLocalisation::indexAudioFiles()
 	while (iter2.next())
 		audioFilesInDir.add(iter2.getFile());
 
-	for (int i = 0; i < 20; ++i)
+	for (int i = 0; i < 100; ++i)
 	{
 		std::random_device seed;
 		std::mt19937 rng(seed());
@@ -318,15 +375,40 @@ String AuditoryLocalisation::returnHHMMSS(double lengthInSeconds)
 
 void AuditoryLocalisation::loadFile()
 {
+	m_player->pause();
+
 	m_player->loadSourceToTransport(audioFilesArray[currentTrialIndex].getFullPathName());
+	sendMsgToLogWindow("Loaded Audio File: " + audioFilesArray[currentTrialIndex].getFullPathName());
+	m_player->setGain(0);
+	m_player->loop(true);
+
+	// Load HRTF based on naming convention of stimulus
+	String filename = m_player->getCurrentSourceFileName();
+	String HRTF_idx = filename.fromFirstOccurrenceOf("HRTF_", false, false).upToFirstOccurrenceOf("_", false, false);
+	File HRTF_file;
+	if (HRTF_idx == "1")
+		HRTF_file = genericHRTF_file;
+	else if (HRTF_idx == "2")
+		HRTF_file = personalizedHRTF_file;
+
+	m_renderer->setOrder(5);
+	m_renderer->loadAmbixFile(HRTF_file);
+
+	// Set random azimuth (yaw) and elevation (pitch) angles
+	float azi = rand() % 361 - 180;
+	float ele = rand() % 361 - 180;
+	m_renderer->setHeadTrackingData(azi, ele, 0);
+
+	sendMsgToLogWindow("Azimuth: " + String(azi));
+	sendMsgToLogWindow("Elevation: " + String(ele));
+	
+	//sendMsgToLogWindow(vis + " / " + azi + " / " + audioFilesArray[currentTrialIndex].getFileName());
+
 	m_player->play();
 
-	String filename = m_player->getCurrentSourceFileName();
-
 	String vis = filename.fromFirstOccurrenceOf("vis_", false, false).upToFirstOccurrenceOf("_", false, false);
-	String azi = filename.fromFirstOccurrenceOf("azi_", false, false).dropLastCharacters(4);
-	sendMsgToLogWindow(vis + " / " + azi + " / " + audioFilesArray[currentTrialIndex].getFileName());
-	m_oscTxRx->sendOscMessage("/targetVisAzEl", (int)vis.getIntValue(), (float)azi.getFloatValue(), (float)0);
+	//sendMsgToLogWindow(vis + " / " + azi + " / " + audioFilesArray[currentTrialIndex].getFileName());
+	m_oscTxRx->sendOscMessage("/targetVisAzEl", (int)vis.getFloatValue(), azi, (float)0);
 }
 
 void AuditoryLocalisation::sendMsgToLogWindow(String message)

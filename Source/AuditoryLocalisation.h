@@ -37,6 +37,11 @@ private:
 	TextButton m_startTest;
 	TextButton m_prevTrial, m_nextTrial;
 	TextButton m_confirmPointer;
+	TextButton m_personalizedHRTF;
+	TextButton m_genericHRTF;
+
+	File genericHRTF_file;
+	File personalizedHRTF_file;
 
 	void selectSrcPath();
 	void indexAudioFiles();
