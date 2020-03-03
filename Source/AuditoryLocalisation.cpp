@@ -37,9 +37,11 @@ AuditoryLocalisation::AuditoryLocalisation()
 	m_confirmPointer.addListener(this);
 	addAndMakeVisible(m_confirmPointer);
 
+	/*
 	m_createRndSubjectIDButton.setButtonText("Random Subject ID");
 	m_createRndSubjectIDButton.addListener(this);
 	addAndMakeVisible(m_createRndSubjectIDButton);
+	*/
 
 	m_labelSubject.setText("Subject Data", NotificationType::dontSendNotification);
 	addAndMakeVisible(m_labelSubject);
@@ -92,12 +94,12 @@ void AuditoryLocalisation::paint(Graphics& g)
 
 	g.setColour(Colours::white);
 	g.drawText(audioFilesDir.getFullPathName(), 180, 20, 440, 25, Justification::centredLeft);
-	g.drawText(genericHRTF_file.getFileName(), 180, 50, 440, 25, Justification::centredLeft);
-	g.drawText(personalizedHRTF_file.getFileName(), 180, 80, 440, 25, Justification::centredLeft);
-	g.drawText("Number of trials: " + String(audioFilesArray.size()) + ", total length: " + returnHHMMSS(totalTimeOfAudioFiles), 180, 110, 440, 25, Justification::centredLeft);
+	g.drawText(genericHRTF_file.getFullPathName(), 180, 50, 440, 25, Justification::centredLeft);
+	g.drawText(personalizedHRTF_file.getFullPathName(), 180, 80, 440, 25, Justification::centredLeft);
+	g.drawText("Number of trials: " + String(audioFilesArray.size()) + ", total length: " + returnHHMMSS(totalTimeOfAudioFiles), 180, 140, 440, 25, Justification::centredLeft);
 	
 	if(audioFilesArray.size() > 0)
-		g.drawText("Current trial: " + String(currentTrialIndex + 1) + " of " + String(audioFilesArray.size()), 180, 140, 440, 25, Justification::centredLeft);
+		g.drawText("Current trial: " + String(currentTrialIndex + 1) + " of " + String(audioFilesArray.size()), 180, 170, 440, 25, Justification::centredLeft);
 }
 
 void AuditoryLocalisation::resized()
@@ -105,18 +107,19 @@ void AuditoryLocalisation::resized()
 	m_chooseStimuliFolder.setBounds(20, 20, 150, 25);
 	m_genericHRTF.setBounds(20, 50, 150, 25);
 	m_personalizedHRTF.setBounds(20, 80, 150, 25);
-	m_startTest.setBounds(20, 110, 150, 25);
-	m_saveLogButton.setBounds(20, 140, 150, 25);
+
+	m_labelSubjectID.setBounds(30, 110, 120, 25);
+	m_editSubjectID.setBounds(155, 110, 250, 25);
+	//m_createRndSubjectIDButton.setBounds(410, 150, 200, 25);
+
+	m_startTest.setBounds(20, 140, 150, 25);
+	m_saveLogButton.setBounds(20, 170, 150, 25);
 
 	m_prevTrial.setBounds(20, 420, 100, 25);
 	m_nextTrial.setBounds(140, 420, 100, 25);
 	m_confirmPointer.setBounds(320, 320, 150, 25);
 
-	m_labelSubjectID.setBounds(30, 150, 120, 25);
-	m_editSubjectID.setBounds(155, 150, 250, 25);
-	m_createRndSubjectIDButton.setBounds(410, 150, 200, 25);
-
-	messageCounter.setBounds(20, 170, 150, 25);
+	messageCounter.setBounds(20, 200, 150, 25);
 }
 
 void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
