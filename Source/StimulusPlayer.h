@@ -50,6 +50,7 @@ public:
 	void changeState(TransportState newState);
 	void buttonClicked(Button* buttonThatWasClicked) override;
 	void sliderValueChanged(Slider* slider) override;
+	void changeOrientation(float roll, float pitch, float yaw);
 	void timerCallback() override;
 
 	// exposing some playback transport functionality

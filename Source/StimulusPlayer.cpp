@@ -305,6 +305,14 @@ void StimulusPlayer::sliderValueChanged(Slider* slider)
 	}
 }
 
+// For changing orientation programatically 
+void StimulusPlayer::changeOrientation(float roll, float pitch, float yaw)
+{
+	rollSlider.setValue(roll);
+	pitchSlider.setValue(pitch);
+	yawSlider.setValue(yaw);
+}
+
 void StimulusPlayer::timerCallback()
 {
 	double currentPosition = transportSource.getCurrentPosition();

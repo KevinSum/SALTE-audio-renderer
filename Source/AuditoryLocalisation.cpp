@@ -37,6 +37,17 @@ AuditoryLocalisation::AuditoryLocalisation()
 	m_confirmPointer.addListener(this);
 	addAndMakeVisible(m_confirmPointer);
 
+	m_createRndSubjectIDButton.setButtonText("Random Subject ID");
+	m_createRndSubjectIDButton.addListener(this);
+	addAndMakeVisible(m_createRndSubjectIDButton);
+
+	m_labelSubject.setText("Subject Data", NotificationType::dontSendNotification);
+	addAndMakeVisible(m_labelSubject);
+	m_labelSubjectID.setText("Subject ID:", NotificationType::dontSendNotification);
+	m_labelSubjectID.setJustificationType(Justification::centredRight);
+	addAndMakeVisible(m_labelSubjectID);
+	addAndMakeVisible(m_editSubjectID);
+
 	// osc logging
 	startTimerHz(60);
 
@@ -101,6 +112,10 @@ void AuditoryLocalisation::resized()
 	m_nextTrial.setBounds(140, 420, 100, 25);
 	m_confirmPointer.setBounds(320, 320, 150, 25);
 
+	m_labelSubjectID.setBounds(30, 150, 120, 25);
+	m_editSubjectID.setBounds(155, 150, 250, 25);
+	m_createRndSubjectIDButton.setBounds(410, 150, 200, 25);
+
 	messageCounter.setBounds(20, 170, 150, 25);
 }
 
@@ -115,6 +130,7 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 		if (audioFilesArray.isEmpty())
 		{
 			indexAudioFiles();
+			loadFile();
 		}
 
 		if (m_startTest.getToggleState())
@@ -130,7 +146,7 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 			m_oscTxRx->addListener(this);
 			activationTime = Time::getMillisecondCounterHiRes();
 
-			//loadFile();
+			loadFile();
 			m_startTest.setToggleState(true, dontSendNotification);
 			m_startTest.setButtonText("Stop Test");
 		}
@@ -157,7 +173,7 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 	}
 	else if (buttonThatWasClicked == &m_confirmPointer)
 	{
-
+		m_oscTxRx->sendOscMessage("/test");
 	}
 	else if (buttonThatWasClicked == &m_saveLogButton)
 	{
@@ -252,11 +268,25 @@ void AuditoryLocalisation::processOscMessage(const OSCMessage& message)
 	
 	oscMessageList.add(messageText);
 
-	if (message.getAddressPattern() == "/nextSample" && message.size() == 1)
+	if (message.getAddressPattern() == "/startPlayback")
 	{
+		m_player->play();
+	}
+	if (message.getAddressPattern() == "/StopPlayback")
+	{
+		m_player->pause();
+	}
+	if (message.getAddressPattern() == "/changeSoundPos" && message.size() == 2 && message[0].isFloat32() && message[1].isFloat32())
+	{
+		float azi = message[0].getFloat32();
+		float ele = message[1].getFloat32();
 
+		changeAudioOrientation(0, ele, azi);
+	}
+	if (message.getAddressPattern() == "/loadNextSample")
+	{
 		m_nextTrial.triggerClick();
-		sendMsgToLogWindow("Hi we did it");
+		
 	}
 }
 
@@ -291,7 +321,7 @@ void AuditoryLocalisation::changeListenerCallback(ChangeBroadcaster* source)
 	{
 		if (!m_player->checkPlaybackStatus() && m_startTest.getToggleState())
 		{
-			m_nextTrial.triggerClick();
+			//m_nextTrial.triggerClick();
 		}
 	}
 }
@@ -391,24 +421,30 @@ void AuditoryLocalisation::loadFile()
 	else if (HRTF_idx == "2")
 		HRTF_file = personalizedHRTF_file;
 
+	// Send HRTF name to Unity
+	m_oscTxRx->sendOscMessage("/HRTF_name", (String)HRTF_file.getFullPathName());
+
+
 	m_renderer->setOrder(5);
 	m_renderer->loadAmbixFile(HRTF_file);
 
-	// Set random azimuth (yaw) and elevation (pitch) angles
-	float azi = rand() % 361 - 180;
-	float ele = rand() % 361 - 180;
-	m_renderer->setHeadTrackingData(azi, ele, 0);
-
-	sendMsgToLogWindow("Azimuth: " + String(azi));
-	sendMsgToLogWindow("Elevation: " + String(ele));
+	// Set azimuth (yaw) and elevation (pitch) angles
+	//m_player->changeOrientation(0, ele, azi);
 	
 	//sendMsgToLogWindow(vis + " / " + azi + " / " + audioFilesArray[currentTrialIndex].getFileName());
 
-	m_player->play();
-
 	String vis = filename.fromFirstOccurrenceOf("vis_", false, false).upToFirstOccurrenceOf("_", false, false);
 	//sendMsgToLogWindow(vis + " / " + azi + " / " + audioFilesArray[currentTrialIndex].getFileName());
-	m_oscTxRx->sendOscMessage("/targetVisAzEl", (int)vis.getFloatValue(), azi, (float)0);
+	//m_oscTxRx->sendOscMessage("/targetVisAzEl", (int)vis.getFloatValue(), azi, (float)0);
+}
+
+// For changing orientation programatically 
+void AuditoryLocalisation::changeAudioOrientation(float roll, float pitch, float yaw)
+{
+	const MessageManagerLock mmLock;
+	m_player->changeOrientation(roll, pitch, yaw);
+	sendMsgToLogWindow("Azimuth: " + String(yaw));
+	sendMsgToLogWindow("Elevation: " + String(pitch));
 }
 
 void AuditoryLocalisation::sendMsgToLogWindow(String message)

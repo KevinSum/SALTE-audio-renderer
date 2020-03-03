@@ -43,6 +43,12 @@ private:
 	File genericHRTF_file;
 	File personalizedHRTF_file;
 
+	TextButton m_createRndSubjectIDButton;
+	void createRandomSubjectID();
+	Label m_labelSubject;
+	Label m_labelSubjectID;
+	TextEditor m_editSubjectID;
+
 	void selectSrcPath();
 	void indexAudioFiles();
 	String returnHHMMSS(double lengthInSeconds);
@@ -54,6 +60,7 @@ private:
 	int currentTrialIndex = 0;
 
 	void loadFile();
+	void changeAudioOrientation(float roll, float pitch, float yaw);
 	void sendMsgToLogWindow(String message);
 
 	// OSC logging
