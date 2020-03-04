@@ -74,7 +74,7 @@ void AuditoryLocalisation::init(OscTransceiver* oscTxRx, StimulusPlayer* player,
 	m_player = player;
 	m_player->addChangeListener(this);
 	m_oscTxRx = oscTxRx;
-	m_oscTxRx->addListener(this);
+	//m_oscTxRx->addListener(this);
 
 	// load settings
 	initSettings();
@@ -133,7 +133,6 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 		if (audioFilesArray.isEmpty())
 		{
 			indexAudioFiles();
-			loadFile();
 		}
 
 		if (m_startTest.getToggleState())
@@ -270,7 +269,6 @@ void AuditoryLocalisation::processOscMessage(const OSCMessage& message)
 	}
 	
 	oscMessageList.add(messageText);
-
 	if (message.getAddressPattern() == "/startPlayback")
 	{
 		m_player->play();
@@ -367,7 +365,7 @@ void AuditoryLocalisation::indexAudioFiles()
 	while (iter2.next())
 		audioFilesInDir.add(iter2.getFile());
 
-	for (int i = 0; i < 100; ++i)
+	for (int i = 0; i < 50; ++i)
 	{
 		std::random_device seed;
 		std::mt19937 rng(seed());
