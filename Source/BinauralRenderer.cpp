@@ -571,7 +571,7 @@ void BinauralRenderer::loadAmbixFile(const File& ambixFile)
 
 	uploadHRIRsToEngine();
 
-	sendMsgToLogWindow("successfully loaded: " + ambixFile.getFileName());
+	sendMsgToLogWindow("successfully loaded: " + ambixFile.getFullPathName());
 
 	listeners.call([&](BinauralRenderer::Listener& l) { l.ambixFileLoaded(ambixFile); });
 }

@@ -34,6 +34,7 @@ private:
 	BinauralRenderer* m_renderer;
 
 	TextButton m_chooseStimuliFolder;
+	TextButton m_demo;
 	TextButton m_startTest;
 	TextButton m_prevTrial, m_nextTrial;
 	TextButton m_confirmPointer;
@@ -45,9 +46,11 @@ private:
 
 	TextButton m_createRndSubjectIDButton;
 	void createRandomSubjectID();
-	Label m_labelSubject;
-	Label m_labelSubjectID;
-	TextEditor m_editSubjectID;
+	Label m_labelComment;
+	TextEditor m_editComment;
+
+	Label m_labelNumTrials;
+	TextEditor m_editNumTrials;
 
 	void selectSrcPath();
 	void indexAudioFiles();

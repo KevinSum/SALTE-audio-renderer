@@ -20,6 +20,12 @@ AuditoryLocalisation::AuditoryLocalisation()
 	m_genericHRTF.addListener(this);
 	addAndMakeVisible(m_genericHRTF);
 
+	m_demo.setButtonText("Stop Demo");
+	m_demo.setToggleState(false, dontSendNotification);
+	m_demo.addListener(this);
+	m_demo.setToggleState(true, dontSendNotification);
+	addAndMakeVisible(m_demo);
+
 	m_startTest.setButtonText("Start Test");
 	m_startTest.setToggleState(false, dontSendNotification);
 	m_startTest.addListener(this);
@@ -43,12 +49,13 @@ AuditoryLocalisation::AuditoryLocalisation()
 	addAndMakeVisible(m_createRndSubjectIDButton);
 	*/
 
-	m_labelSubject.setText("Subject Data", NotificationType::dontSendNotification);
-	addAndMakeVisible(m_labelSubject);
-	m_labelSubjectID.setText("Subject ID:", NotificationType::dontSendNotification);
-	m_labelSubjectID.setJustificationType(Justification::centredRight);
-	addAndMakeVisible(m_labelSubjectID);
-	addAndMakeVisible(m_editSubjectID);
+	m_labelComment.setText("Comment:", NotificationType::dontSendNotification);
+	addAndMakeVisible(m_labelComment);
+	addAndMakeVisible(m_editComment);
+
+	m_labelNumTrials.setText("Number of trials:", NotificationType::dontSendNotification);
+	addAndMakeVisible(m_labelNumTrials);
+	addAndMakeVisible(m_editNumTrials);
 
 	// osc logging
 	startTimerHz(60);
@@ -96,10 +103,10 @@ void AuditoryLocalisation::paint(Graphics& g)
 	g.drawText(audioFilesDir.getFullPathName(), 180, 20, 440, 25, Justification::centredLeft);
 	g.drawText(genericHRTF_file.getFullPathName(), 180, 50, 440, 25, Justification::centredLeft);
 	g.drawText(personalizedHRTF_file.getFullPathName(), 180, 80, 440, 25, Justification::centredLeft);
-	g.drawText("Number of trials: " + String(audioFilesArray.size()) + ", total length: " + returnHHMMSS(totalTimeOfAudioFiles), 180, 140, 440, 25, Justification::centredLeft);
+	g.drawText("Number of trials: " + String(audioFilesArray.size()) + ", total length: " + returnHHMMSS(totalTimeOfAudioFiles), 180, 200, 440, 25, Justification::centredLeft);
 	
 	if(audioFilesArray.size() > 0)
-		g.drawText("Current trial: " + String(currentTrialIndex + 1) + " of " + String(audioFilesArray.size()), 180, 170, 440, 25, Justification::centredLeft);
+		g.drawText("Current trial: " + String(currentTrialIndex + 1) + " of " + String(audioFilesArray.size()), 180, 230, 440, 25, Justification::centredLeft);
 }
 
 void AuditoryLocalisation::resized()
@@ -108,18 +115,23 @@ void AuditoryLocalisation::resized()
 	m_genericHRTF.setBounds(20, 50, 150, 25);
 	m_personalizedHRTF.setBounds(20, 80, 150, 25);
 
-	m_labelSubjectID.setBounds(30, 110, 120, 25);
-	m_editSubjectID.setBounds(155, 110, 250, 25);
+	m_labelComment.setBounds(20, 110, 120, 25);
+	m_editComment.setBounds(135, 110, 250, 25);
 	//m_createRndSubjectIDButton.setBounds(410, 150, 200, 25);
 
-	m_startTest.setBounds(20, 140, 150, 25);
-	m_saveLogButton.setBounds(20, 170, 150, 25);
+	m_labelNumTrials.setBounds(20, 140, 120, 25);
+	m_editNumTrials.setBounds(135, 140, 250, 25);
+
+	m_demo.setBounds(20, 170, 150, 25);
+
+	m_startTest.setBounds(20, 200, 150, 25);
+	m_saveLogButton.setBounds(20, 230, 150, 25);
 
 	m_prevTrial.setBounds(20, 420, 100, 25);
 	m_nextTrial.setBounds(140, 420, 100, 25);
 	m_confirmPointer.setBounds(320, 320, 150, 25);
 
-	messageCounter.setBounds(20, 200, 150, 25);
+	messageCounter.setBounds(20, 260, 150, 25);
 }
 
 void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
@@ -127,6 +139,26 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 	if (buttonThatWasClicked == &m_chooseStimuliFolder)
 	{
 		selectSrcPath();
+	}
+	else if (buttonThatWasClicked == &m_demo) // Tell unity to save csv file or not
+	{
+		if (m_demo.getToggleState())
+		{
+			m_demo.setToggleState(false, dontSendNotification);
+			m_demo.setButtonText("Start Demo");
+			m_oscTxRx->addListener(this);
+			m_oscTxRx->sendOscMessage("/LogData", true);
+			m_oscTxRx->sendOscMessage("/Comment", m_editComment.getText());
+			m_oscTxRx->removeListener(this);
+		}
+		else
+		{
+			m_demo.setToggleState(true, dontSendNotification);
+			m_demo.setButtonText("Stop Demo");
+			m_oscTxRx->addListener(this);
+			m_oscTxRx->sendOscMessage("/LogData", false);
+			m_oscTxRx->removeListener(this);
+		}
 	}
 	else if (buttonThatWasClicked == &m_startTest)
 	{
@@ -144,6 +176,8 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 		}
 		else
 		{
+			indexAudioFiles();
+
 			oscMessageList.clear();
 			m_oscTxRx->addListener(this);
 			activationTime = Time::getMillisecondCounterHiRes();
@@ -171,6 +205,8 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 		else
 		{
 			m_startTest.triggerClick();
+			m_demo.setToggleState(false, dontSendNotification);
+			m_demo.triggerClick();
 		}
 	}
 	else if (buttonThatWasClicked == &m_confirmPointer)
@@ -365,7 +401,8 @@ void AuditoryLocalisation::indexAudioFiles()
 	while (iter2.next())
 		audioFilesInDir.add(iter2.getFile());
 
-	for (int i = 0; i < 50; ++i)
+	int numTrials = m_editNumTrials.getText().getIntValue();
+	for (int i = 0; i < numTrials; ++i)
 	{
 		std::random_device seed;
 		std::mt19937 rng(seed());
