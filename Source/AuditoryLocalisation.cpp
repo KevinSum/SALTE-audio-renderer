@@ -316,7 +316,7 @@ void AuditoryLocalisation::processOscMessage(const OSCMessage& message)
 	if (message.getAddressPattern() == "/changeSoundPos" && message.size() == 2 && message[0].isFloat32() && message[1].isFloat32())
 	{
 		float azi = message[0].getFloat32();
-		float ele = 0 - message[1].getFloat32();
+		float ele = message[1].getFloat32();
 
 		changeAudioOrientation(0, ele, azi);
 	}

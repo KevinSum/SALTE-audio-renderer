@@ -290,7 +290,7 @@ void StimulusPlayer::sliderValueChanged(Slider* slider)
 		float pitch = static_cast<float>(pitchSlider.getValue());
 		float yaw = static_cast<float>(yawSlider.getValue());
 		
-		rotator.updateEulerRPY(roll, pitch, yaw);
+		rotator.updateEulerRPY(roll, -pitch, yaw);
 	}
 	else if (slider == &gainSlider)
 	{

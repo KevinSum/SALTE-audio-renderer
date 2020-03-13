@@ -209,11 +209,18 @@ void BinauralRenderer::updateMatrices()
 void BinauralRenderer::setHeadTrackingData(float roll, float pitch, float yaw)
 {
 	// swap the rotation direction
-	m_roll = -roll;
-	m_pitch = -pitch;
-	m_yaw = -yaw;
+	//m_roll = roll;
+	//m_pitch = -pitch;
+	//m_yaw = -yaw;
 
-	m_headTrackRotator.updateEulerRPY(m_roll, m_pitch, m_yaw);
+	//m_headTrackRotator.updateEulerRPY(m_roll, m_pitch, m_yaw);
+	
+	//m_roll = roll;
+	
+	m_roll = roll;
+	m_pitch = pitch;
+	m_yaw = yaw;
+	m_headTrackRotator.updateEulerYPR(m_yaw * -1, m_pitch, m_roll * -1);
 }
 
 float BinauralRenderer::getRoll()
