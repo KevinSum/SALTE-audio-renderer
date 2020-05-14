@@ -88,7 +88,7 @@ MainComponent::MainComponent()
 	addChildComponent(m_mixedMethods);
 
 	// localisation component temporarily on top of the session form and mixed methods
-	m_localisationComponent.init(&oscTxRx, &m_stimulusPlayer, &m_binauralRenderer);
+	m_localisationComponent.init(&oscTxRx, &m_stimulusPlayer, &m_binauralRenderer, &m_loudspeakerRenderer);
 	m_localisationComponent.addChangeListener(this);
 	addChildComponent(m_localisationComponent);
 

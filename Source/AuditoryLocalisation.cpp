@@ -5,6 +5,7 @@ AuditoryLocalisation::AuditoryLocalisation()
 	: m_oscTxRx(nullptr)
 	, m_player(nullptr)
 	, m_renderer(nullptr)
+	, m_lsRenderer(nullptr)
 {
 	formatManager.registerBasicFormats();
 
@@ -20,11 +21,15 @@ AuditoryLocalisation::AuditoryLocalisation()
 	m_genericHRTF.addListener(this);
 	addAndMakeVisible(m_genericHRTF);
 
-	m_demo.setButtonText("Stop Demo");
-	m_demo.setToggleState(false, dontSendNotification);
+	m_demo.setButtonText("Currently in demo mode");
 	m_demo.addListener(this);
 	m_demo.setToggleState(true, dontSendNotification);
 	addAndMakeVisible(m_demo);
+
+	m_soundVis.setButtonText("Sound source visible");
+	m_soundVis.addListener(this);
+	m_soundVis.setToggleState(true, dontSendNotification);
+	addAndMakeVisible(m_soundVis);
 
 	m_startTest.setButtonText("Start Test");
 	m_startTest.setToggleState(false, dontSendNotification);
@@ -39,19 +44,11 @@ AuditoryLocalisation::AuditoryLocalisation()
 	m_nextTrial.addListener(this);
 	addAndMakeVisible(m_nextTrial);
 
-	m_confirmPointer.setButtonText("Confirm Pointer Direction");
-	m_confirmPointer.addListener(this);
-	addAndMakeVisible(m_confirmPointer);
-
 	/*
 	m_createRndSubjectIDButton.setButtonText("Random Subject ID");
 	m_createRndSubjectIDButton.addListener(this);
 	addAndMakeVisible(m_createRndSubjectIDButton);
 	*/
-
-	m_labelComment.setText("Comment:", NotificationType::dontSendNotification);
-	addAndMakeVisible(m_labelComment);
-	addAndMakeVisible(m_editComment);
 
 	m_labelNumTrials.setText("Number of trials:", NotificationType::dontSendNotification);
 	addAndMakeVisible(m_labelNumTrials);
@@ -63,7 +60,7 @@ AuditoryLocalisation::AuditoryLocalisation()
 	m_saveLogButton.setButtonText("Save Log");
 	m_saveLogButton.addListener(this);
 	m_saveLogButton.setEnabled(false);
-	addAndMakeVisible(m_saveLogButton);
+	//addAndMakeVisible(m_saveLogButton);
 
 	addAndMakeVisible(messageCounter);
 
@@ -75,8 +72,9 @@ AuditoryLocalisation::~AuditoryLocalisation()
 	saveSettings();
 }
 
-void AuditoryLocalisation::init(OscTransceiver* oscTxRx, StimulusPlayer* player, BinauralRenderer* renderer)
+void AuditoryLocalisation::init(OscTransceiver* oscTxRx, StimulusPlayer* player, BinauralRenderer* renderer, LoudspeakerRenderer* lsRenderer)
 {
+	m_lsRenderer = lsRenderer;
 	m_renderer = renderer;
 	m_player = player;
 	m_player->addChangeListener(this);
@@ -103,7 +101,7 @@ void AuditoryLocalisation::paint(Graphics& g)
 	g.drawText(audioFilesDir.getFullPathName(), 180, 20, 440, 25, Justification::centredLeft);
 	g.drawText(genericHRTF_file.getFullPathName(), 180, 50, 440, 25, Justification::centredLeft);
 	g.drawText(personalizedHRTF_file.getFullPathName(), 180, 80, 440, 25, Justification::centredLeft);
-	g.drawText("Number of trials: " + String(audioFilesArray.size()) + ", total length: " + returnHHMMSS(totalTimeOfAudioFiles), 180, 200, 440, 25, Justification::centredLeft);
+	g.drawText("Number of trials: " + String(audioFilesArray.size()), 180, 200, 440, 25, Justification::centredLeft);
 	
 	if(audioFilesArray.size() > 0)
 		g.drawText("Current trial: " + String(currentTrialIndex + 1) + " of " + String(audioFilesArray.size()), 180, 230, 440, 25, Justification::centredLeft);
@@ -115,23 +113,19 @@ void AuditoryLocalisation::resized()
 	m_genericHRTF.setBounds(20, 50, 150, 25);
 	m_personalizedHRTF.setBounds(20, 80, 150, 25);
 
-	m_labelComment.setBounds(20, 110, 120, 25);
-	m_editComment.setBounds(135, 110, 250, 25);
-	//m_createRndSubjectIDButton.setBounds(410, 150, 200, 25);
+	m_labelNumTrials.setBounds(20, 110, 120, 25);
+	m_editNumTrials.setBounds(135, 110, 250, 25);
 
-	m_labelNumTrials.setBounds(20, 140, 120, 25);
-	m_editNumTrials.setBounds(135, 140, 250, 25);
+	m_soundVis.setBounds(20, 140, 150, 25);
 
 	m_demo.setBounds(20, 170, 150, 25);
 
 	m_startTest.setBounds(20, 200, 150, 25);
 	m_saveLogButton.setBounds(20, 230, 150, 25);
 
-	m_prevTrial.setBounds(20, 420, 100, 25);
-	m_nextTrial.setBounds(140, 420, 100, 25);
-	m_confirmPointer.setBounds(320, 320, 150, 25);
+	m_prevTrial.setBounds(20, 260, 100, 25);
+	m_nextTrial.setBounds(140, 260, 100, 25);
 
-	messageCounter.setBounds(20, 260, 150, 25);
 }
 
 void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
@@ -148,15 +142,33 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 			m_demo.setButtonText("Start Demo");
 			m_oscTxRx->addListener(this);
 			m_oscTxRx->sendOscMessage("/LogData", true);
-			m_oscTxRx->sendOscMessage("/Comment", m_editComment.getText());
 			m_oscTxRx->removeListener(this);
 		}
 		else
 		{
 			m_demo.setToggleState(true, dontSendNotification);
-			m_demo.setButtonText("Stop Demo");
+			m_demo.setButtonText("Currently in demo mode");
 			m_oscTxRx->addListener(this);
 			m_oscTxRx->sendOscMessage("/LogData", false);
+			m_oscTxRx->removeListener(this);
+		}
+	}
+	else if (buttonThatWasClicked == &m_soundVis) // Tell unity to save csv file or not
+	{
+		if (m_soundVis.getToggleState())
+		{
+			m_soundVis.setToggleState(false, dontSendNotification);
+			m_soundVis.setButtonText("Sound source invisible");
+			m_oscTxRx->addListener(this);
+			m_oscTxRx->sendOscMessage("/soundVis", false);
+			m_oscTxRx->removeListener(this);
+		}
+		else
+		{
+			m_soundVis.setToggleState(true, dontSendNotification);
+			m_soundVis.setButtonText("Sound source visible");
+			m_oscTxRx->addListener(this);
+			m_oscTxRx->sendOscMessage("/soundVis", true);
 			m_oscTxRx->removeListener(this);
 		}
 	}
@@ -208,10 +220,6 @@ void AuditoryLocalisation::buttonClicked(Button* buttonThatWasClicked)
 			m_demo.setToggleState(false, dontSendNotification);
 			m_demo.triggerClick();
 		}
-	}
-	else if (buttonThatWasClicked == &m_confirmPointer)
-	{
-		m_oscTxRx->sendOscMessage("/test");
 	}
 	else if (buttonThatWasClicked == &m_saveLogButton)
 	{
@@ -318,6 +326,15 @@ void AuditoryLocalisation::processOscMessage(const OSCMessage& message)
 		float azi = message[0].getFloat32();
 		float ele = message[1].getFloat32();
 
+		while (azi >= 180)
+		{
+			azi -= 360;
+		}
+		while (azi <= -180)
+		{
+			azi += 360;
+		}
+
 		changeAudioOrientation(0, ele, azi);
 	}
 	if (message.getAddressPattern() == "/loadNextSample")
@@ -380,24 +397,10 @@ void AuditoryLocalisation::indexAudioFiles()
 {
 	audioFilesArray.clear();
 	Array<File> audioFilesInDir;
-	
-	// create the test file array (visual stimuli)
-	audioFilesInDir.clear();
-	DirectoryIterator iter1(audioFilesDir, false, "stim_vis_1_*.wav");
-	while (iter1.next())
-		audioFilesInDir.add(iter1.getFile());
-
-	for (int i = 0; i < 5; ++i)
-	{
-		std::random_device seed;
-		std::mt19937 rng(seed());
-		std::shuffle(audioFilesInDir.begin(), audioFilesInDir.end(), rng);
-		audioFilesArray.addArray(audioFilesInDir);
-	}
 
 	// create the test file array (audio stimuli)
 	audioFilesInDir.clear();
-	DirectoryIterator iter2(audioFilesDir, false, "stim_vis_0_*.wav");
+	DirectoryIterator iter2(audioFilesDir, false, "stim_*.wav");
 	while (iter2.next())
 		audioFilesInDir.add(iter2.getFile());
 
@@ -459,9 +462,20 @@ void AuditoryLocalisation::loadFile()
 	else if (HRTF_idx == "2")
 		HRTF_file = personalizedHRTF_file;
 
-	// Send HRTF name to Unity
-	m_oscTxRx->sendOscMessage("/HRTF_name", (String)HRTF_file.getFullPathName());
-
+	// Send whether it's generic or personal HRTF to Unity
+	String HRTFstr = (String)HRTF_file.getFullPathName();
+	if (m_lsRenderer->isRendererEnabled() == true)
+	{
+		m_oscTxRx->sendOscMessage("/HRTF_name", (String)"Loudspeakers");
+	}
+	else if (HRTFstr.contains("SADIE") != std::string::npos) 
+	{
+		m_oscTxRx->sendOscMessage("/HRTF_name", (String)"Generic Headphones");
+	}
+	else
+	{
+		m_oscTxRx->sendOscMessage("/HRTF_name", (String)"Personal Headphones");
+	}
 
 	m_renderer->setOrder(5);
 	m_renderer->loadAmbixFile(HRTF_file);

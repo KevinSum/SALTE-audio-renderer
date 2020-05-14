@@ -4,6 +4,7 @@
 #include "OscTransceiver.h"
 #include "StimulusPlayer.h"
 #include "BinauralRenderer.h"
+#include "LoudspeakerRenderer.h"
 
 class AuditoryLocalisation	:	public Component
 							//,	public OSCReceiver
@@ -17,7 +18,7 @@ public:
 	AuditoryLocalisation();
 	~AuditoryLocalisation();
 
-	void init(OscTransceiver* oscTxRx, StimulusPlayer* player, BinauralRenderer* renderer);
+	void init(OscTransceiver* oscTxRx, StimulusPlayer* player, BinauralRenderer* renderer, LoudspeakerRenderer* lsRenderer);
 
 	void paint(Graphics& g) override;
 	void resized() override;
@@ -32,9 +33,11 @@ private:
 	OscTransceiver* m_oscTxRx;
 	StimulusPlayer* m_player;
 	BinauralRenderer* m_renderer;
+	LoudspeakerRenderer* m_lsRenderer;
 
 	TextButton m_chooseStimuliFolder;
 	TextButton m_demo;
+	TextButton m_soundVis;
 	TextButton m_startTest;
 	TextButton m_prevTrial, m_nextTrial;
 	TextButton m_confirmPointer;
